@@ -12,6 +12,7 @@ import WorkflowKanban from "./pages/dashboard/WorkflowKanban";
 import MemoryPanel from "./pages/dashboard/MemoryPanel";
 import Analytics from "./pages/dashboard/Analytics";
 import Integrations from "./pages/dashboard/Integrations";
+import VideoCreation from "./pages/dashboard/VideoCreation";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="memory" element={<MemoryPanel />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="integrations" element={<Integrations />} />
+            <Route path="video" element={<VideoCreation />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
