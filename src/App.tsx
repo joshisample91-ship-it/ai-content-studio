@@ -13,6 +13,7 @@ import MemoryPanel from "./pages/dashboard/MemoryPanel";
 import Analytics from "./pages/dashboard/Analytics";
 import Integrations from "./pages/dashboard/Integrations";
 import VideoCreation from "./pages/dashboard/VideoCreation";
+import Settings from "./pages/dashboard/Settings";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="analytics" element={<Analytics />} />
             <Route path="integrations" element={<Integrations />} />
             <Route path="video" element={<VideoCreation />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
