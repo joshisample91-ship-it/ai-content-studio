@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, Reorder, useDragControls } from "framer-motion";
 import {
   Video,
   Play,
@@ -42,6 +42,123 @@ const defaultScenes: Scene[] = [
   { id: "3", title: "Solution", script: "", duration: 15, visualNote: "Introduce your product/idea" },
   { id: "4", title: "Call to Action", script: "", duration: 5, visualNote: "Clear next step for viewers" },
 ];
+
+interface SceneItemProps {
+  scene: Scene;
+  index: number;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onUpdate: (updates: Partial<Scene>) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}
+
+function SceneItem({ scene, index, isExpanded, onToggleExpand, onUpdate, onRemove, canRemove }: SceneItemProps) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={scene}
+      dragListener={false}
+      dragControls={dragControls}
+      className={`rounded-xl border transition-all ${
+        isExpanded
+          ? "border-primary/50 bg-primary/5"
+          : "border-border/50 bg-secondary/20 hover:border-border"
+      }`}
+      whileDrag={{ 
+        scale: 1.02, 
+        boxShadow: "0 8px 32px -8px hsl(0 0% 0% / 0.5)",
+        cursor: "grabbing"
+      }}
+    >
+      {/* Scene Header */}
+      <div className="w-full flex items-center gap-3 p-4">
+        <div
+          onPointerDown={(e) => dragControls.start(e)}
+          className="cursor-grab active:cursor-grabbing touch-none p-1 -m-1 rounded hover:bg-secondary/50 transition-colors"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center">
+          {index + 1}
+        </span>
+        <Input
+          value={scene.title}
+          onChange={(e) => onUpdate({ title: e.target.value })}
+          className="flex-1 bg-transparent border-none h-auto p-0 text-foreground font-medium focus-visible:ring-0"
+        />
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>{scene.duration}s</span>
+        </div>
+        <button onClick={onToggleExpand} className="p-1 rounded hover:bg-secondary/50 transition-colors">
+          <ChevronDown
+            className={`h-4 w-4 text-muted-foreground transition-transform ${
+              isExpanded ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+      </div>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="px-4 pb-4 space-y-4"
+        >
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-2">Script / Voiceover</label>
+            <Textarea
+              placeholder="What will be said in this scene..."
+              value={scene.script}
+              onChange={(e) => onUpdate({ script: e.target.value })}
+              className="min-h-[100px] bg-secondary/30 border-border/50 resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-2">Duration (seconds)</label>
+              <Input
+                type="number"
+                min={1}
+                max={60}
+                value={scene.duration}
+                onChange={(e) => onUpdate({ duration: parseInt(e.target.value) || 5 })}
+                className="bg-secondary/30 border-border/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-2">Visual Notes</label>
+              <Input
+                placeholder="Describe the visuals..."
+                value={scene.visualNote}
+                onChange={(e) => onUpdate({ visualNote: e.target.value })}
+                className="bg-secondary/30 border-border/50"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={onRemove}
+              disabled={!canRemove}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Remove Scene
+            </Button>
+          </div>
+        </motion.div>
+      )}
+    </Reorder.Item>
+  );
+}
 
 export default function VideoCreation() {
   const [scenes, setScenes] = useState<Scene[]>(defaultScenes);
@@ -126,106 +243,25 @@ export default function VideoCreation() {
               </Button>
             </div>
 
-            <div className="space-y-3">
+            <Reorder.Group
+              axis="y"
+              values={scenes}
+              onReorder={setScenes}
+              className="space-y-3"
+            >
               {scenes.map((scene, index) => (
-                <motion.div
+                <SceneItem
                   key={scene.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className={`rounded-xl border transition-all ${
-                    expandedScene === scene.id
-                      ? "border-primary/50 bg-primary/5"
-                      : "border-border/50 bg-secondary/20 hover:border-border"
-                  }`}
-                >
-                  {/* Scene Header */}
-                  <button
-                    className="w-full flex items-center gap-3 p-4"
-                    onClick={() => setExpandedScene(expandedScene === scene.id ? null : scene.id)}
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                    <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center">
-                      {index + 1}
-                    </span>
-                    <Input
-                      value={scene.title}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        updateScene(scene.id, { title: e.target.value });
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex-1 bg-transparent border-none h-auto p-0 text-foreground font-medium focus-visible:ring-0"
-                    />
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>{scene.duration}s</span>
-                    </div>
-                    <ChevronDown
-                      className={`h-4 w-4 text-muted-foreground transition-transform ${
-                        expandedScene === scene.id ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {/* Expanded Content */}
-                  {expandedScene === scene.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="px-4 pb-4 space-y-4"
-                    >
-                      <div>
-                        <label className="block text-xs font-medium text-muted-foreground mb-2">Script / Voiceover</label>
-                        <Textarea
-                          placeholder="What will be said in this scene..."
-                          value={scene.script}
-                          onChange={(e) => updateScene(scene.id, { script: e.target.value })}
-                          className="min-h-[100px] bg-secondary/30 border-border/50 resize-none"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-muted-foreground mb-2">Duration (seconds)</label>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={60}
-                            value={scene.duration}
-                            onChange={(e) => updateScene(scene.id, { duration: parseInt(e.target.value) || 5 })}
-                            className="bg-secondary/30 border-border/50"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-muted-foreground mb-2">Visual Notes</label>
-                          <Input
-                            placeholder="Describe the visuals..."
-                            value={scene.visualNote}
-                            onChange={(e) => updateScene(scene.id, { visualNote: e.target.value })}
-                            className="bg-secondary/30 border-border/50"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => removeScene(scene.id)}
-                          disabled={scenes.length <= 1}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remove Scene
-                        </Button>
-                      </div>
-                    </motion.div>
-                  )}
-                </motion.div>
+                  scene={scene}
+                  index={index}
+                  isExpanded={expandedScene === scene.id}
+                  onToggleExpand={() => setExpandedScene(expandedScene === scene.id ? null : scene.id)}
+                  onUpdate={(updates) => updateScene(scene.id, updates)}
+                  onRemove={() => removeScene(scene.id)}
+                  canRemove={scenes.length > 1}
+                />
               ))}
-            </div>
+            </Reorder.Group>
           </motion.div>
 
           {/* Script Editor - Full Script View */}
